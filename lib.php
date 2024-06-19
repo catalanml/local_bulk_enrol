@@ -8,6 +8,8 @@
  */
 
 define('DEFAULT_AUTH', 'auth_ldap');
+define('UDLALOGINWS', '/api/v1.0/login');
+define('UDLASENDQUIZ', '/api/v1.0/internal/moodle');
 
 use stdClass;
 use Exception;
@@ -17,7 +19,6 @@ defined('MOODLE_INTERNAL') || die;
 function process_user($user_data, $user_role)
 {
     global $DB;
-
     $user = new stdClass();
     $user->auth = DEFAULT_AUTH;
     $user->username = $user_data->rut;
@@ -75,4 +76,41 @@ function process_user($user_data, $user_role)
     }
 
     return true;
+}
+
+function refresh_token()
+{
+
+    $curl = new \local_bulk_enrol_curl_manager();
+
+    $destiny_endpoint = get_config('gradabledatasender', 'destiny_endpoint');
+    $endpoint_username = get_config('gradabledatasender', 'endpoint_username');
+    $endpoint_password = get_config('gradabledatasender', 'endpoint_password');
+
+    $data = [
+        'username' => $endpoint_username,
+        'password' => $endpoint_password,
+    ];
+
+    $headers[] = 'Content-Type: application/json';
+
+    try {
+        $wsresult  = $curl->make_request(
+            $destiny_endpoint . UDLALOGINWS,
+            'POST',
+            $data,
+            $headers
+        );
+
+
+        if ($wsresult->remote_endpoint_status === 200) {
+            $curl->close();
+            return $wsresult->remote_endpoint_response->data->accessToken;
+        } else {
+            $curl->close();
+            return false;
+        }
+    } catch (\Throwable $th) {
+        return false;
+    }
 }
