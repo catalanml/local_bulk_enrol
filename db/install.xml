@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/bulk_enrol/db" VERSION="2022112903" COMMENT="XMLDB file for Moodle blocks/bulk_enrol"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+    <TABLES>
+        <TABLE>
+        </TABLE>
+    </TABLES>
+</XMLDB>
