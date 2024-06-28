@@ -66,7 +66,7 @@ class local_bulk_enrol_external extends external_api
         $trx_packet->creation_date = time();
         $trx_packet->process_date = null;
 
-        $trx_id = $DB->insert_record('bulk_enrol_transactions', $trx_packet);
+        $trx_id = $DB->insert_record('bulk_enrol_transaction', $trx_packet);
 
         foreach ($params->data as $user) {
 
@@ -83,7 +83,7 @@ class local_bulk_enrol_external extends external_api
         return true;
     }
 
-    public static function local_bulk_enrol_register_trx()
+    public static function local_bulk_enrol_register_trx_returns()
     {
         return [];
     }

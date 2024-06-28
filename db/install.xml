@@ -2,7 +2,32 @@
 <XMLDB PATH="local/bulk_enrol/db" VERSION="2022112903" COMMENT="XMLDB file for Moodle blocks/bulk_enrol"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
     <TABLES>
-        <TABLE>
+        <TABLE NAME='bulk_enrol_transaction' COMMENT="Table to store a external trx">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="id of the record"/>
+                <FIELD NAME="trx_id" TYPE="text" LENGTH="" NOTNULL="true" COMMENT="trx id"/>
+                <FIELD NAME="trx_type" TYPE="char" LENGTH="200" NOTNULL="true" COMMENT="trx type"/>
+                <FIELD NAME="status" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="status of the transaction"/>
+                <FIELD NAME="creation_date" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="time created"/>
+                <FIELD NAME="process_date" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="time modified"/>  
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
         </TABLE>
+
+        <TABLE NAME='bulk_enrol_transactions_temporal_records' COMMENT="Table to temporally store each record from a external trx">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="id of the record"/>
+                <FIELD NAME="trx_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="trx id"/>
+                <FIELD NAME="rut" TYPE="char" LENGTH="20" NOTNULL="true" COMMENT="user rut"/>
+                <FIELD NAME="firstname" TYPE="char" LENGTH="200" NOTNULL="true" COMMENT="user firstname"/>
+                <FIELD NAME="lastname" TYPE="char" LENGTH="200" NOTNULL="true" COMMENT="user lastname"/>
+                <FIELD NAME="email" TYPE="char" LENGTH="200" NOTNULL="true" COMMENT="user email"/>
+                <FIELD NAME="courses" TYPE="text" NOTNULL="true" COMMENT="user courses to enrol json"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
     </TABLES>
 </XMLDB>
