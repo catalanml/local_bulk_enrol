@@ -21,7 +21,7 @@ class local_bulk_enrol_external extends external_api
     // Add more API functions as needed
 
     // Define the API functions available
-    public static function bulk_enrol_users_parameters()
+    public static function local_bulk_enrol_register_trx_parameters()
     {
         return new external_function_parameters(
             [
@@ -47,7 +47,7 @@ class local_bulk_enrol_external extends external_api
     }
 
 
-    public static function bulk_enrol_users($trxId, $trxType, $data)
+    public static function local_bulk_enrol_register_trx($trxId, $trxType, $data)
     {
         global $DB;
         
@@ -57,7 +57,7 @@ class local_bulk_enrol_external extends external_api
             'data' => $data
         ];
 
-        $params = (object) self::validate_parameters(self::bulk_enrol_users_parameters(),  $to_validate);
+        $params = (object) self::validate_parameters(self::local_bulk_enrol_register_trx_parameters(),  $to_validate);
 
         $trx_packet = new stdClass();
         $trx_packet->trx_id = $params->trxId;
@@ -83,7 +83,7 @@ class local_bulk_enrol_external extends external_api
         return true;
     }
 
-    public static function enrol_users_returns()
+    public static function local_bulk_enrol_register_trx()
     {
         return [];
     }
