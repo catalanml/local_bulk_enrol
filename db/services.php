@@ -22,7 +22,7 @@ $functions = [
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
     ],
 
-    'local_bulk_enrol_send_process_result' =>
+    /*'local_bulk_enrol_send_process_result' =>
     [
         'classname' => 'local_bulk_enrol\external',
         'methodname' => 'local_bulk_enrol_send_process_result',
@@ -31,5 +31,5 @@ $functions = [
         'type' => 'write',
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
-    ],
+    ],*/
 ];
