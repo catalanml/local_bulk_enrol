@@ -15,7 +15,7 @@ $functions = [
     [
         'classname' => 'local_bulk_enrol\external',
         'methodname' => 'local_bulk_enrol_receive_trx',
-        'classpath' => 'local/carga_masiva/classes/external/external.php',
+        'classpath' => 'local/bulk_enrol/classes/external.php',
         'description' => 'Receive transaction to store in temporal table for later processing',
         'type' => 'write',
         'ajax' => true,

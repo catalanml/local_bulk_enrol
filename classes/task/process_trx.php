@@ -13,13 +13,13 @@ namespace local_bulk_enrol\task;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/local/bulk_enrol/lib.php');
-require_once($CFG->dirroot . '/local/bulk_enrol/classes/external.php');
+require_once($CFG->dirroot . "/local/bulk_enrol/classes/external.php");
 
 
 use context_system;
 use Exception;
 use stdClass;
-use local_bulk_enrol_external;
+use local_bulk_enrol\external;
 
 class cron_task extends \core\task\scheduled_task
 {
@@ -51,7 +51,7 @@ class cron_task extends \core\task\scheduled_task
                 set_config('current_token', $token, 'gradabledatasender');
                 mtrace('Token updated');
 
-                $pending_transactions_ids = $DB->get_records('bulk_enrol_transactions', ['status' => 0]);
+                $pending_transactions_ids = $DB->get_records('bulk_enrol_trx', ['status' => 0]);
 
                 // Read pending transactions to process
                 foreach ($pending_transactions_ids as $pending_transaction_id) {
@@ -63,7 +63,7 @@ class cron_task extends \core\task\scheduled_task
                         'data' => []
                     ];
 
-                    $transactions = $DB->get_records('bulk_enrol_transactions_temporal_records', ['trx_id' => $pending_transaction_id->trx_id]);
+                    $transactions = $DB->get_records('bulk_enrol_trx_tmp_records', ['trx_id' => $pending_transaction_id->trx_id]);
 
 
                     foreach ($transactions as $transaction) {
@@ -101,7 +101,7 @@ class cron_task extends \core\task\scheduled_task
                     // Convert response array to JSON and store or log it as needed
                     $response_json = json_encode($response, JSON_PRETTY_PRINT);
 
-                    local_bulk_enrol_external::local_bulk_enrol_send_process_result($response_json);
+                    //external::local_bulk_enrol_send_process_result($response_json);
 
                     return true;
                 }

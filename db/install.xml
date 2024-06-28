@@ -2,7 +2,7 @@
 <XMLDB PATH="local/bulk_enrol/db" VERSION="2022112903" COMMENT="XMLDB file for Moodle blocks/bulk_enrol"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
     <TABLES>
-        <TABLE NAME='bulk_enrol_transaction' COMMENT="Table to store a external trx">
+        <TABLE NAME='bulk_enrol_trx' COMMENT="Table to store a external trx">
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="id of the record"/>
                 <FIELD NAME="trx_id" TYPE="text" LENGTH="" NOTNULL="true" COMMENT="trx id"/>
@@ -16,7 +16,7 @@
             </KEYS>
         </TABLE>
 
-        <TABLE NAME='bulk_enrol_transactions_temporal_records' COMMENT="Table to temporally store each record from a external trx">
+        <TABLE NAME='bulk_enrol_trx_tmp_records' COMMENT="Table to temporally store each record from a external trx">
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="id of the record"/>
                 <FIELD NAME="trx_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="trx id"/>
@@ -29,5 +29,6 @@
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
+        </TABLE>
     </TABLES>
 </XMLDB>
