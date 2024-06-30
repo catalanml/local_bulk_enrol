@@ -103,7 +103,7 @@ class cron_task extends \core\task\scheduled_task
 
                     //external::local_bulk_enrol_send_process_result($response_json);
 
-                    return true;
+                    //return true;
                 }
             }
         } catch (\Throwable $th) {
