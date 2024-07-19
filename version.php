@@ -9,8 +9,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->requires   = 2019111809;                       // This plugin requires Moodle VER 3.9.
-$plugin->version    = 2024061803;                       // This plugins version number.
-$plugin->release    = 'v1.0';                           // This plugins release number.
+$plugin->requires   = 2022041900;                      
+$plugin->version    = 2024061803;                       
+$plugin->release    = 'v1.0';                          
 $plugin->maturity   = MATURITY_STABLE;
 $plugin->component  = 'local_bulk_enrol';
