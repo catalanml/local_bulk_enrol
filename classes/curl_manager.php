@@ -1,20 +1,17 @@
 <?php
 
 /**
- * curl_manager Class
+ * Curl Manager Class
  *
  * @package    local_bulk_enrol
  * @copyright  2024 Lucas Catalan
  * @author     Lucas Catalan <catalan.munoz.l@gmail.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-class local_bulk_enrol_curl_manager
-{
+class local_bulk_enrol_curl_manager {
     private $curl;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->curl = curl_init();
     }
 
@@ -31,12 +28,19 @@ class local_bulk_enrol_curl_manager
      * @param array $headers Optional. Additional headers to be sent with the request.
      * @param string|null $authMethod Optional. The authentication method to use ('bearer', 'basic', 'token').
      * @param string|null $authToken Optional. The authentication token to be used with the selected authentication method.
+     * @param bool $plain_remote_response Optional. Whether to return the plain remote response. Default is false.
      * @return object Enriched response from the URL.
      * @throws Exception If there is a cURL error or an HTTP error status code is returned.
      */
-
-    public function make_request($url, $method = 'GET', $data = [], $headers = [], $authMethod = null, $authToken = null, $plain_remote_response = false)
-    {
+    public function make_request(
+        string $url,
+        string $method = 'GET',
+        array $data = [],
+        array $headers = [],
+        ?string $authMethod = null,
+        ?string $authToken = null,
+        bool $plain_remote_response = false
+    ): stdClass {
         $response = new stdClass();
 
         $response->remote_endpoint_status = 0;
@@ -44,15 +48,13 @@ class local_bulk_enrol_curl_manager
         $response->remote_endpoint_response = null;
         $response->message = '';
 
-
         curl_setopt($this->curl, CURLOPT_URL, $url);
         curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->curl, CURLOPT_ENCODING, '');
-        curl_setopt($this->curl, CURLOPT_MAXREDIRS, 10);   
+        curl_setopt($this->curl, CURLOPT_MAXREDIRS, 10);
         curl_setopt($this->curl, CURLOPT_TIMEOUT, 0);
         curl_setopt($this->curl, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($this->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-
 
         // Handle different authentication methods
         if (!is_null($authMethod) && !is_null($authToken)) {
@@ -73,58 +75,45 @@ class local_bulk_enrol_curl_manager
             curl_setopt($this->curl, CURLOPT_HTTPHEADER, $headers);
         }
 
-
         if ($method == 'POST') {
             curl_setopt($this->curl, CURLOPT_POST, true);
             curl_setopt($this->curl, CURLOPT_POSTFIELDS, json_encode($data));
         }
 
-        if ($method == 'GET') {
-
-            if (!empty($data)) {
-                curl_setopt($this->curl, CURLOPT_URL, $url . '?' . http_build_query($data));
-            } else {
-                curl_setopt($this->curl, CURLOPT_URL, $url);
-            }
+        if ($method == 'GET' && !empty($data)) {
+            curl_setopt($this->curl, CURLOPT_URL, $url . '?' . http_build_query($data));
         }
-
 
         // Execute request
         $wsresponse = curl_exec($this->curl);
         $httpCode = curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
 
         $response->remote_endpoint_response = $wsresponse;
-        $response->remote_endpoint_status =  $httpCode;
-
+        $response->remote_endpoint_status = $httpCode;
 
         if (curl_errno($this->curl)) {
-            //throw new Exception('Curl Error: ' . curl_error($this->curl));
             $response->remote_endpoint_error = true;
             $response->message = 'Curl Error: ' . curl_error($this->curl);
         }
 
         if ($httpCode >= 400) {
-            //throw new Exception("HTTP Request Failed with Status Code $httpCode");
             $response->remote_endpoint_error = true;
             $response->message = 'HTTP Request Failed with Status Code ' . $httpCode;
         }
-        //if plain_remote_response is true, and there is no error, return the plain response
+
         if (!$plain_remote_response && !$response->remote_endpoint_error) {
             $response->remote_endpoint_response = json_decode($response->remote_endpoint_response);
         }
 
-
         return $response;
     }
 
-    public function close()
-    {
+    public function close(): void {
         curl_close($this->curl);
     }
 
     // Destructor to ensure the curl resource is freed.
-    public function __destruct()
-    {
+    public function __destruct() {
         $this->close();
     }
 }
