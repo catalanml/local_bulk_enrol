@@ -21,15 +21,4 @@ $functions = [
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
     ],
-
-    /*'local_bulk_enrol_send_process_result' =>
-    [
-        'classname' => 'local_bulk_enrol\external',
-        'methodname' => 'local_bulk_enrol_send_process_result',
-        'classpath' => 'local/carga_masiva/classes/external/external.php',
-        'description' => 'Send the result of the process to the client',
-        'type' => 'write',
-        'ajax' => true,
-        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
-    ],*/
 ];

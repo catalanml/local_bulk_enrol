@@ -11,8 +11,6 @@
  define('UDLALOGINWS', '/api/v1.0/login');
  define('UDLASENDQUIZ', '/api/v1.0/internal/moodle');
  
- use stdClass;
- use Exception;
  
  defined('MOODLE_INTERNAL') || die;
  

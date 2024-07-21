@@ -10,7 +10,7 @@
 defined('MOODLE_INTERNAL') || die;
 
 $plugin->requires   = 2022041900;                      
-$plugin->version    = 2024061803;                       
+$plugin->version    = 2024061807;                       
 $plugin->release    = 'v1.0';                          
 $plugin->maturity   = MATURITY_STABLE;
 $plugin->component  = 'local_bulk_enrol';
