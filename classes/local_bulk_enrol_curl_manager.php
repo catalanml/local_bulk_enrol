@@ -93,7 +93,7 @@ class local_bulk_enrol_curl_manager {
 
         if (curl_errno($this->curl)) {
             $response->remote_endpoint_error = true;
-            $response->message = 'Curl Error: ' . curl_error($this->curl);
+            $response->message = 'Curl Error: ' . curl_errno($this->curl). ' ' .curl_error($this->curl);
         }
 
         if ($httpCode >= 400) {

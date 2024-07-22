@@ -21,4 +21,14 @@ $functions = [
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
     ],
+    'local_bulk_enrol_send_process_result' =>
+    [
+        'classname' => 'local_bulk_enrol\external',
+        'methodname' => 'local_bulk_enrol_send_process_result',
+        'classpath' => 'local/bulk_enrol/classes/external.php',
+        'description' => 'Send transaction processing result',
+        'type' => 'write',
+        'ajax' => true,
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
+    ],
 ];
