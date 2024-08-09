@@ -13,7 +13,6 @@ require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/externallib.php');
 require_once($CFG->dirroot . '/local/bulk_enrol/lib.php');
 
-use core_reportbuilder\external\columns\sort\get;
 use external_api;
 use external_value;
 use external_single_structure;
@@ -104,108 +103,117 @@ class external extends external_api
     {
         return new external_function_parameters(
             [
-                'data' => new external_single_structure(
-                    [
-                        'trxid' => new external_value(PARAM_RAW, 'Transaction ID', VALUE_REQUIRED),
-                        'data' => new external_multiple_structure(
-                            new external_single_structure(
-                                [
-                                    'rut' => new external_value(PARAM_RAW, 'User RUT', VALUE_REQUIRED),
-                                    'courses' => new external_multiple_structure(
-                                        new external_value(PARAM_TEXT, 'Course shortname', VALUE_REQUIRED)
-                                    )
-                                ],
-                                'proccesed data',
-                                VALUE_OPTIONAL
-                            ),
-                            'proccesed data',
-                            VALUE_OPTIONAL
-                        ),
-                        'errors' => new external_multiple_structure(
-                            new external_single_structure(
-                                [
-                                    'rut' => new external_value(PARAM_RAW, 'User RUT', VALUE_REQUIRED),
-                                    'detail' => new external_value(PARAM_TEXT, 'Error detail', VALUE_REQUIRED),
-                                    'courses' => new external_multiple_structure(
-                                        new external_single_structure(
-                                            [
-                                                'course' => new external_value(PARAM_TEXT, 'Course shortname', VALUE_REQUIRED),
-                                                'detail' => new external_value(PARAM_TEXT, 'Error detail', VALUE_REQUIRED)
-                                            ],
-                                            'Course error',
-                                            VALUE_OPTIONAL
+                'data' => new external_multiple_structure(
+                    new external_single_structure(
+                        [
+                            'trxid' => new external_value(PARAM_RAW, 'Transaction ID', VALUE_REQUIRED),
+                            'errors' => new external_multiple_structure(
+                                new external_single_structure(
+                                    [
+                                        'rut' => new external_value(PARAM_RAW, 'User RUT', VALUE_OPTIONAL),
+                                        'detail' => new external_value(PARAM_RAW, 'Error detail', VALUE_OPTIONAL),
+                                        'courses' => new external_multiple_structure(
+                                            new external_single_structure(
+                                                [
+                                                    'course' => new external_value(PARAM_RAW, 'Course shortname', VALUE_OPTIONAL),
+                                                    'detail' => new external_value(PARAM_RAW, 'Error detail', VALUE_OPTIONAL)
+                                                ],
+                                                'Course error',
+                                                VALUE_OPTIONAL
+                                            ),
+                                            'Array of courses with errors',
+                                            VALUE_OPTIONAL,
+                                            []
                                         )
-                                    )
-                                ],
-                                'User error',
+                                    ],
+                                    'User error',
+                                    VALUE_OPTIONAL
+                                )
+                            ),
+                            'data' => new external_multiple_structure(
+                                new external_single_structure(
+                                    [
+                                        'rut' => new external_value(PARAM_RAW, 'User RUT', VALUE_OPTIONAL),
+                                        'courses' => new external_multiple_structure(
+                                            new external_value(PARAM_RAW, 'Course shortname', VALUE_OPTIONAL),
+                                            'Array of courses',
+                                            VALUE_OPTIONAL,
+                                            []
+                                        )
+                                    ],
+                                    'Processed data',
+                                    VALUE_OPTIONAL
+                                ),
+                                'Processed data array',
                                 VALUE_OPTIONAL
                             )
-
-                        ),
-                    ]
+                        ]
+                    )
                 )
             ]
         );
     }
+    
 
     public static function local_bulk_enrol_send_process_result($data)
     {
         global $DB, $CFG;
-
-        $params = (object) self::validate_parameters(self::local_bulk_enrol_send_process_result_parameters(),  $data);
-
-        $response = json_encode([$params->data], JSON_PRETTY_PRINT);
-
-        $trx_id = $params->data['trxid'];
-
+    
+        // Validate and decode the parameters
+        $params = self::validate_parameters(self::local_bulk_enrol_send_process_result_parameters(), $data);
+    
+        // Extract the transaction ID from the params
+        $trx_id = $params['data'][0]['trxid'];
+    
+        // Retrieve the transaction record from the database
         $trx_packet_sql = "SELECT * FROM {bulk_enrol_trx} WHERE trx_id = :trx_id";
         $trx_packet = $DB->get_record_sql($trx_packet_sql, ['trx_id' => $trx_id]);
-
+    
+        // Update the transaction packet with the status and processing date
         $trx_packet->status = 1;
         $trx_packet->process_date = time();
-
-
+    
         try {
+            // Include the cURL manager
             require_once($CFG->dirroot . '/local/bulk_enrol/classes/local_bulk_enrol_curl_manager.php');
-
-            $destiny_endpoint = get_config('bulk_enrol', 'destiny_endpoint');
-            $token = get_config('bulk_enrol', 'current_token');
-
-            if (!$destiny_endpoint) {
-                $destiny_endpoint = get_config('gradabledatasender', 'destiny_endpoint');
-            }
-
-            if (!$token) {
-                $token = get_config('gradabledatasender', 'current_token');
-            }
-
+    
+            // Get the destination endpoint and token from configuration
+            $destiny_endpoint = get_config('bulk_enrol', 'destiny_endpoint') ?: get_config('gradabledatasender', 'destiny_endpoint');
+            $token = get_config('bulk_enrol', 'current_token') ?: get_config('gradabledatasender', 'current_token');
+    
+            // Initialize the cURL manager
             $curl = new \local_bulk_enrol_curl_manager();
-
-
-            $headers[] = 'Content-Type: application/json';
-
+    
+            // Prepare the headers for the request
+            $headers = ['Content-Type: application/json'];
+    
+            // Make the request to the external service
             $wsresult = $curl->make_request(
                 $destiny_endpoint . UDLASENDTRXRESULT,
                 'POST',
-                [$response],
+                [$data],
                 $headers,
                 'bearer',
                 $token
-
             );
-
+    
+            // Close the cURL session
+            $curl->close();
+    
+            // Check the response status and update the transaction record if successful
             if ($wsresult->remote_endpoint_status === 200) {
-                $curl->close();
                 $DB->update_record('bulk_enrol_trx', $trx_packet);
                 return true;
             } else {
-                $curl->close();
                 return false;
             }
         } catch (\Throwable $th) {
-            return false;  
+            // Log or handle the exception
+            return false;
         }
     }
+    
+    
 
     public static function local_bulk_enrol_send_process_result_returns()
     {

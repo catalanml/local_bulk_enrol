@@ -42,7 +42,7 @@ function local_bulk_enrol_refresh_token()
         $endpoint_username = get_config('gradabledatasender', 'endpoint_username');
         $endpoint_password = get_config('gradabledatasender', 'endpoint_password');
         $destiny_endpoint = get_config('gradabledatasender', 'destiny_endpoint');
-        
+
         set_config('endpoint_username', $endpoint_username, 'bulk_enrol');
         set_config('endpoint_password', $endpoint_password, 'bulk_enrol');
         set_config('destiny_endpoint', $destiny_endpoint, 'bulk_enrol');
@@ -81,7 +81,7 @@ function process_user($user_data, $user_role)
     global $DB;
 
     $user = new stdClass();
-    $user->username = $user_data->rut;
+    $user->username = strtolower($user_data->rut); // Ensure username is lowercase
     $user->password = $user_data->rut;
     $user->firstname = $user_data->firstname;
     $user->lastname = $user_data->lastname;
@@ -93,31 +93,50 @@ function process_user($user_data, $user_role)
     // Check if the user exists or create a new one
     if (!$user_id = $DB->get_field('user', 'id', ['username' => $user->username])) {
         try {
-            user_create_user($user);
+            $user_id = user_create_user($user);
+            $data['rut'] = $user_data->rut;  // Add user to data if successfully created
         } catch (Exception $e) {
-            $errors[] = ['rut' => $user_data->rut, 'detail' => $e->getMessage()];
+            $errors[] = [
+                'rut' => $user_data->rut, 
+                'detail' => $e->getMessage(),
+                'courses' => []
+            ];
             return ['data' => $data, 'errors' => $errors];
         }
+    } else {
+        // User already exists, add user to data
+        $data['rut'] = $user_data->rut;
     }
 
     // Validate user role
     $valid_roles = ['student', 'editingteacher'];
     if (!in_array($user_role, $valid_roles)) {
-        $errors[] = ['rut' => $user_data->rut, 'detail' => 'Invalid role'];
+        $errors[] = [
+            'rut' => $user_data->rut,
+            'detail' => 'Invalid role',
+            'courses' => []
+        ];
         return ['data' => $data, 'errors' => $errors];
     }
 
     $role_id = $DB->get_field('role', 'id', ['shortname' => $user_role]);
     if (!$role_id) {
-
-        $errors[] = ['detail' => 'Invalid role'];
-        return ['rut' => $user_data->rut, 'data' => $data, 'errors' => $errors];
+        $errors[] = [
+            'rut' => $user_data->rut,
+            'detail' => 'Invalid role',
+            'courses' => []
+        ];
+        return ['data' => $data, 'errors' => $errors];
     }
 
     $enrol = enrol_get_plugin('manual');
     if (empty($enrol)) {
-        $errors = ['detail' => 'Manual plugin not installed'];
-        return ['rut' => $user_data->rut, 'data' => $data, 'errors' => $errors];
+        $errors[] = [
+            'rut' => $user_data->rut,
+            'detail' => 'Manual plugin not installed',
+            'courses' => []
+        ];
+        return ['data' => $data, 'errors' => $errors];
     }
 
     // Initialize course errors array
@@ -150,14 +169,25 @@ function process_user($user_data, $user_role)
             $enrol->enrol_user($validinstance, $user_id, $role_id, 0, 0, ENROL_USER_ACTIVE);
             $success_courses[] = $course;
         } catch (Exception $e) {
-            $course_errors[] = ['course' => $course, 'detail' => $e->getMessage()];
+            $course_errors[] = [
+                'course' => $course,
+                'detail' => $e->getMessage()
+            ];
         }
     }
 
-    $data = ['rut' => $user_data->rut, 'courses' => $success_courses];
+    // Update data with successful course enrollments
+    if (!empty($success_courses)) {
+        $data['courses'] = $success_courses;
+    }
 
+    // If there were course errors, add them to the errors array
     if (!empty($course_errors)) {
-        $errors = ['rut' => $user_data->rut, 'detail' => 'Courses not found', 'courses' => $course_errors];
+        $errors[] = [
+            'rut' => $user_data->rut,
+            'detail' => 'Courses not found',
+            'courses' => $course_errors
+        ];
     }
 
     return ['data' => $data, 'errors' => $errors];
@@ -167,19 +197,20 @@ function testcore()
 {
     global $DB;
 
+    // Get pending transactions to process
     $pending_transactions = $DB->get_records('bulk_enrol_trx', ['status' => 0]);
 
-    // Read pending transactions to process
     foreach ($pending_transactions as $pending_transaction) {
-        // Initialize response array
+        // Initialize response array with trxid as required
         $transaction_result = [
             'trxid' => $pending_transaction->trx_id,
-            'data' => [],
             'errors' => [],
+            'data' => [],
         ];
 
+        // Get records associated with the current transaction
         $transactions = $DB->get_records('bulk_enrol_trx_tmp_records', ['trx_id' => $pending_transaction->id]);
-
+        
         foreach ($transactions as $transaction) {
             $user_data = new stdClass();
             $user_data->rut = $transaction->rut;
@@ -189,17 +220,27 @@ function testcore()
             $user_data->courses = json_decode($transaction->courses);
             $user_role = $pending_transaction->trx_type;
 
+            // Process each user
             $result = process_user($user_data, $user_role);
 
-            $transaction_result['data'][] = $result['data'];
+            // Append the processed data and errors to the response
+            if (!empty($result['data']['courses'])) { // Check if there are successful course enrollments or user creation
+                $transaction_result['data'][] = $result['data'];
+            }
             if (!empty($result['errors'])) {
-                $transaction_result['errors'][] = $result['errors'];
+                // Add errors directly to the errors array
+                $transaction_result['errors'] = array_merge($transaction_result['errors'], $result['errors']);
             }
         }
 
+        // Prepare the data structure according to the expected format
+        $data = ['data' => [$transaction_result]];
 
-        $data = ['data' => $transaction_result];
-
-        var_dump(external::local_bulk_enrol_send_process_result($data));
+        try {
+            var_dump(external::local_bulk_enrol_send_process_result($data));
+        } catch (Exception $e) {
+            // Log error
+            print_object($e);
+        }
     }
 }

@@ -53,13 +53,14 @@ class cron_task extends \core\task\scheduled_task
 
                 // Read pending transactions to process
                 foreach ($pending_transactions as $pending_transaction) {
-                    // Initialize response array
+                    // Initialize response array with trxid as required
                     $transaction_result = [
                         'trxid' => $pending_transaction->trx_id,
-                        'data' => [],
                         'errors' => [],
+                        'data' => [],
                     ];
 
+                    // Get records associated with the current transaction
                     $transactions = $DB->get_records('bulk_enrol_trx_tmp_records', ['trx_id' => $pending_transaction->id]);
 
                     foreach ($transactions as $transaction) {
@@ -71,16 +72,21 @@ class cron_task extends \core\task\scheduled_task
                         $user_data->courses = json_decode($transaction->courses);
                         $user_role = $pending_transaction->trx_type;
 
+                        // Process each user
                         $result = process_user($user_data, $user_role);
 
-                        $transaction_result['data'][] = $result['data'];
+                        // Append the processed data and errors to the response
+                        if (!empty($result['data']['courses'])) { // Check if there are successful course enrollments or user creation
+                            $transaction_result['data'][] = $result['data'];
+                        }
                         if (!empty($result['errors'])) {
-                            $transaction_result['errors'][] = $result['errors'];
+                            // Add errors directly to the errors array
+                            $transaction_result['errors'] = array_merge($transaction_result['errors'], $result['errors']);
                         }
                     }
 
-
-                    $data = ['data' => $transaction_result];
+                    // Prepare the data structure according to the expected format
+                    $data = ['data' => [$transaction_result]];
 
 
                     external::local_bulk_enrol_send_process_result($data);
@@ -90,6 +96,7 @@ class cron_task extends \core\task\scheduled_task
             }
         } catch (\Throwable $th) {
             mtrace('Error in external endpoint');
+            mtrace($th->getMessage());
             return false;
         }
     }
