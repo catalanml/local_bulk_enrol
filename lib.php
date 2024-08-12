@@ -11,7 +11,6 @@ require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/user/lib.php');
 require_once($CFG->dirroot . "/local/bulk_enrol/classes/external.php");
 
-use core_reportbuilder\external\filters\set;
 use local_bulk_enrol\external;
 
 
@@ -197,20 +196,19 @@ function testcore()
 {
     global $DB;
 
-    // Get pending transactions to process
+   
     $pending_transactions = $DB->get_records('bulk_enrol_trx', ['status' => 0]);
 
     foreach ($pending_transactions as $pending_transaction) {
         // Initialize response array with trxid as required
         $transaction_result = [
             'trxid' => $pending_transaction->trx_id,
-            'errors' => [],
             'data' => [],
+            'errors' => [],
         ];
 
-        // Get records associated with the current transaction
         $transactions = $DB->get_records('bulk_enrol_trx_tmp_records', ['trx_id' => $pending_transaction->id]);
-        
+
         foreach ($transactions as $transaction) {
             $user_data = new stdClass();
             $user_data->rut = $transaction->rut;
@@ -220,21 +218,18 @@ function testcore()
             $user_data->courses = json_decode($transaction->courses);
             $user_role = $pending_transaction->trx_type;
 
-            // Process each user
             $result = process_user($user_data, $user_role);
 
-            // Append the processed data and errors to the response
-            if (!empty($result['data']['courses'])) { // Check if there are successful course enrollments or user creation
+            if (!empty($result['data']['courses'])) { 
                 $transaction_result['data'][] = $result['data'];
             }
             if (!empty($result['errors'])) {
-                // Add errors directly to the errors array
+
                 $transaction_result['errors'] = array_merge($transaction_result['errors'], $result['errors']);
             }
         }
-
-        // Prepare the data structure according to the expected format
-        $data = ['data' => [$transaction_result]];
+        
+        $data = $transaction_result;
 
         try {
             var_dump(external::local_bulk_enrol_send_process_result($data));
@@ -242,5 +237,7 @@ function testcore()
             // Log error
             print_object($e);
         }
+        exit;
     }
 }
+

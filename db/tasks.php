@@ -10,10 +10,9 @@ $tasks = [
        'classname' => 'local_bulk_enrol\task\process_trx',
         'blocking' => 0,
         'minute' => '0',
-        'hour' => '0',
+        'hour' => '3',
         'day' => '*',
         'month' => '*',
-        'dayofweek' => '*',
-        'disabled' => 1
+        'dayofweek' => '*'
     ]
 ];

@@ -8,10 +8,12 @@
  * @author     Lucas Catalan <catalan.munoz.l@gmail.com>
  */
 
-class local_bulk_enrol_curl_manager {
+class local_bulk_enrol_curl_manager
+{
     private $curl;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->curl = curl_init();
     }
 
@@ -93,7 +95,7 @@ class local_bulk_enrol_curl_manager {
 
         if (curl_errno($this->curl)) {
             $response->remote_endpoint_error = true;
-            $response->message = 'Curl Error: ' . curl_errno($this->curl). ' ' .curl_error($this->curl);
+            $response->message = 'Curl Error: ' . curl_errno($this->curl) . ' ' . curl_error($this->curl);
         }
 
         if ($httpCode >= 400) {
@@ -108,12 +110,14 @@ class local_bulk_enrol_curl_manager {
         return $response;
     }
 
-    public function close(): void {
+    public function close(): void
+    {
         curl_close($this->curl);
     }
 
     // Destructor to ensure the curl resource is freed.
-    public function __destruct() {
+    public function __destruct()
+    {
         $this->close();
     }
 }

@@ -6,18 +6,15 @@
  * @author    Lucas Catalan <catalan.munoz.l@gmail.com>
  */
 
-namespace local_bulk_enrol\task;
-
 defined('MOODLE_INTERNAL') || die();
-require_once(__DIR__ . '/../../config.php');
-require_once($CFG->dirroot . '/local/bulk_enrol/lib.php');
-require_once($CFG->dirroot . "/local/bulk_enrol/classes/external.php");
 
-
-
+namespace local_bulk_enrol\task;
 use local_bulk_enrol\external;
 
-class cron_task extends \core\task\scheduled_task
+require_once($CFG->dirroot . '/local/bulk_enrol/lib.php');
+require_once($CFG->dirroot . '/local/bulk_enrol/classes/external.php');
+
+class process_trx extends \core\task\scheduled_task
 {
     /**
      * Get task name
@@ -31,7 +28,6 @@ class cron_task extends \core\task\scheduled_task
 
     /** @var string $stringname */
     protected $stringname = 'refresh_token_cron';
-
 
     /**
      * Execute task
@@ -86,13 +82,13 @@ class cron_task extends \core\task\scheduled_task
                     }
 
                     // Prepare the data structure according to the expected format
-                    $data = ['data' => [$transaction_result]];
+                    $data = $transaction_result;
 
-
+                    // Send data to the external service
                     external::local_bulk_enrol_send_process_result($data);
-
-                    return true;
                 }
+                return true;
+
             }
         } catch (\Throwable $th) {
             mtrace('Error in external endpoint');
