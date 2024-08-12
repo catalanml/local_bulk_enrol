@@ -147,30 +147,32 @@ class external extends external_api
             ]
         );
     }
-    
-    
+
+
 
     public static function local_bulk_enrol_send_process_result($data)
     {
         global $DB, $CFG;
-    
+
         $params = self::validate_parameters(self::local_bulk_enrol_send_process_result_parameters(), $data);
-    
+
         // Extract the transaction ID from the params
         $trx_id = $params['trxid'];
-    
+
         $trx_packet_sql = "SELECT * FROM {bulk_enrol_trx} WHERE trx_id = :trx_id";
         $trx_packet = $DB->get_record_sql($trx_packet_sql, ['trx_id' => $trx_id]);
-    
+
         $trx_packet->status = 1;
         $trx_packet->process_date = time();
-    
+
+        $tosend = ['data' => [$params]];
+
         try {
             require_once($CFG->dirroot . '/local/bulk_enrol/classes/local_bulk_enrol_curl_manager.php');
-    
+
             $destiny_endpoint = get_config('bulk_enrol', 'destiny_endpoint') ?: get_config('gradabledatasender', 'destiny_endpoint');
             $token = get_config('bulk_enrol', 'current_token') ?: get_config('gradabledatasender', 'current_token');
-    
+
             $curl = new \local_bulk_enrol_curl_manager();
 
             $headers = ['Content-Type: application/json'];
@@ -178,14 +180,14 @@ class external extends external_api
             $wsresult = $curl->make_request(
                 $destiny_endpoint . UDLASENDTRXRESULT,
                 'POST',
-                $params,  
+                $tosend,
                 $headers,
                 'bearer',
                 $token
             );
-            
+
             $curl->close();
-    
+
             if ($wsresult->remote_endpoint_status === 200) {
                 $DB->update_record('bulk_enrol_trx', $trx_packet);
                 return true;
@@ -199,8 +201,8 @@ class external extends external_api
             return false;
         }
     }
-    
-    
+
+
 
     public static function local_bulk_enrol_send_process_result_returns()
     {
